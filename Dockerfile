@@ -16,8 +16,8 @@ RUN apt-get update && apt-get install -y \
     libzip-dev \
     libpng-dev \
     libpq-dev \
-    libonig-dev \       # required by mbstring
-    pkg-config \        # helps detect Oniguruma
+    libonig-dev \      
+    pkg-config \
     nodejs \
     npm \
     && apt-get clean
