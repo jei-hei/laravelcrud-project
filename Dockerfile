@@ -1,54 +1,36 @@
-# =============================
-# 1️⃣ Base image
-# =============================
 FROM php:8.2-cli
 
-# Set working directory
 WORKDIR /app
 
-# =============================
-# 2️⃣ Install system dependencies
-# =============================
+# Install PHP extensions and system dependencies
 RUN apt-get update && apt-get install -y \
     git \
     unzip \
-    curl \
     libzip-dev \
     libpng-dev \
+    curl \
     libpq-dev \
-    libonig-dev \      
-    pkg-config \
-    nodejs \
-    npm \
-    && apt-get clean
+    nodejs npm \
+    && docker-php-ext-install pdo pdo_pgsql zip
 
-# =============================
-# 3️⃣ Install PHP extensions
-# =============================
-RUN docker-php-ext-install pdo pdo_pgsql mbstring zip
+# Install Composer
+COPY --from=composer:latest /usr/bin/composer /usr/bin/composer
 
-# =============================
-# 4️⃣ Copy project files
-# =============================
+# Copy project files
 COPY . .
 
-# =============================
-# 5️⃣ Install Composer
-# =============================
-COPY --from=composer:latest /usr/bin/composer /usr/bin/composer
+# Install Laravel dependencies
 RUN composer install --no-dev --optimize-autoloader
 
-# =============================
-# 6️⃣ Build frontend assets
-# =============================
-RUN npm install && npm run build
+# Generate app key
+RUN php artisan key:generate
 
-# =============================
-# 7️⃣ Set startup command
-# =============================
-# Laravel cache clearing now runs at container start
-CMD php artisan config:clear \
-    && php artisan cache:clear \
-    && php artisan route:clear \
-    && php artisan view:clear \
-    && php artisan serve --host=0.0.0.0 --port=$PORT
+# Install frontend dependencies and build assets
+RUN npm install
+RUN npm run build
+
+# Expose port
+EXPOSE 10000
+
+# Startup: wait a few seconds, run migrations, then serve
+CMD sleep 5 && php artisan migrate --force && php -S 0.0.0.0:10000 -t public
