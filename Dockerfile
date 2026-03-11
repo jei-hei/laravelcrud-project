@@ -1,10 +1,10 @@
-# Use PHP-FPM as base image for Laravel web apps
-FROM php:8.2-fpm
+# Use official PHP image with Apache for Laravel web apps
+FROM php:8.2-apache
 
-# Set working directory inside the container
-WORKDIR /app
+# Enable mod_rewrite for Apache (Laravel requires this)
+RUN a2enmod rewrite
 
-# Install system dependencies, PHP extensions and PHP itself
+# Install system dependencies and PHP extensions
 RUN apt-get update && apt-get install -y \
     git \
     unzip \
@@ -15,7 +15,6 @@ RUN apt-get update && apt-get install -y \
     nodejs \
     npm \
     php-cli \
-    php-fpm \
     php-mbstring \
     php-xml \
     php-pdo \
@@ -27,21 +26,23 @@ RUN apt-get update && apt-get install -y \
 COPY --from=composer:latest /usr/bin/composer /usr/bin/composer
 
 # Copy project files into the container
-COPY . .
+COPY . /var/www/html/
 
-# Install PHP dependencies using Composer
+# Set the correct permissions
+RUN chown -R www-data:www-data /var/www/html
+
+# Install Laravel dependencies using Composer
 RUN composer install --no-dev --optimize-autoloader
 
 # Generate Laravel app key
 RUN php artisan key:generate
 
-# Install frontend dependencies and build assets using npm
+# Install frontend dependencies and build assets
 RUN npm install
 RUN npm run build
-RUN /bin/bash
 
-# Expose the port for the application
-EXPOSE 8000
+# Expose Apache default port (80)
+EXPOSE 80
 
-# Command to start Laravel app using php -S (built-in PHP server for development)
-CMD sleep 5 && php artisan migrate --force && php -S 0.0.0.0:8000 -t public
+# Start Apache and Laravel app
+CMD ["apache2-foreground"]
