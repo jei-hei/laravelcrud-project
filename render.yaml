@@ -1,4 +1,3 @@
-# render.yaml for using Docker to build the Laravel app
 services:
   - type: web
     name: laravelcrud-project
