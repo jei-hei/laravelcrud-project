@@ -1,0 +1,10 @@
+services:
+  - type: web
+    name: laravelcrud-project
+    env: php
+    buildCommand: |
+      apt-get update && apt-get install -y php-cli php-fpm php-mbstring php-xml php-json php-curl
+      composer install
+      npm install
+      npm run build
+    startCommand: php artisan serve --host=0.0.0.0 --port=8000
