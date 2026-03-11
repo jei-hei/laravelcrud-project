@@ -1,10 +1,8 @@
-# Use official PHP image with Apache for Laravel web apps
-FROM php:8.2-apache
+FROM php:8.2-cli
 
-# Enable mod_rewrite for Apache (Laravel requires this)
-RUN a2enmod rewrite
+WORKDIR /app
 
-# Install system dependencies and PHP extensions
+# Install system dependencies
 RUN apt-get update && apt-get install -y \
     git \
     unzip \
@@ -13,36 +11,19 @@ RUN apt-get update && apt-get install -y \
     libpng-dev \
     libpq-dev \
     nodejs \
-    npm \
-    php-cli \
-    php-mbstring \
-    php-xml \
-    php-pdo \
-    php-pdo_pgsql \
-    && docker-php-ext-install pdo pdo_pgsql zip \
-    && apt-get clean
+    npm
 
-# Install Composer (PHP dependency manager)
+# Install PHP extensions
+RUN docker-php-ext-install pdo pdo_pgsql zip
+
+# Copy project
+COPY . .
+
+# Install composer
 COPY --from=composer:latest /usr/bin/composer /usr/bin/composer
 
-# Copy project files into the container
-COPY . /var/www/html/
-
-# Set the correct permissions
-RUN chown -R www-data:www-data /var/www/html
-
-# Install Laravel dependencies using Composer
 RUN composer install --no-dev --optimize-autoloader
 
-# Generate Laravel app key
-RUN php artisan key:generate
+RUN npm install && npm run build
 
-# Install frontend dependencies and build assets
-RUN npm install
-RUN npm run build
-
-# Expose Apache default port (80)
-EXPOSE 80
-
-# Start Apache and Laravel app
-CMD ["apache2-foreground"]
+CMD php artisan serve --host=0.0.0.0 --port=$PORT
