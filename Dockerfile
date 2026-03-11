@@ -16,7 +16,7 @@ RUN apt-get update && apt-get install -y \
     libzip-dev \
     libpng-dev \
     libpq-dev \
-    libonig-dev \        # required by mbstring
+    libonig-dev \        
     pkg-config \
     nodejs \
     npm \
