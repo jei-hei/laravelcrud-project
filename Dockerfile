@@ -38,6 +38,7 @@ RUN php artisan key:generate
 # Install frontend dependencies and build assets using npm
 RUN npm install
 RUN npm run build
+RUN /bin/bash
 
 # Expose the port for the application
 EXPOSE 8000
